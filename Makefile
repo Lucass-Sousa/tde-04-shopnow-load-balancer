@@ -1,20 +1,25 @@
 .PHONY: help install up down logs request start start-round-robin start-random start-comparacao validar-env server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load test-load-round-robin test-load-random
 
-# Configuração da demonstração
+############################################################
+# CONFIGURAÇÃO DA DEMONSTRAÇÃO
+############################################################
 -include .env
 
 ALGORITMO ?= round-robin
 
-# Ajuda
+############################################################
+# AJUDA E DEPENDÊNCIAS
+############################################################
 help:  ## Mostrar esta ajuda
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "} {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}'
 
-# Dependências
 install:  ## Instalar Apache Benchmark para os testes de carga
 	sudo apt update
 	sudo apt install -y apache2-utils
 
-# Ciclo de vida da aplicação
+############################################################
+# CICLO DE VIDA DA APLICAÇÃO
+############################################################
 up:  ## Subir todos os containers Docker
 	@docker compose up -d --build --quiet-build --wait > /dev/null
 	@echo ""
@@ -29,7 +34,9 @@ down:  ## Derribar todos os containers
 logs:  ## Ver logs dos containers
 	docker compose logs -f --tail=0
 
-# Demonstrações no terminal
+############################################################
+# DEMONSTRAÇÕES NO TERMINAL
+############################################################
 request:  ## Enviar uma requisicao (ALGORITMO=random para Random)
 	@servidor=$$(curl -s -D - -o /dev/null "http://localhost:3001/?algorithm=$(ALGORITMO)" | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
 	if [ -n "$$servidor" ]; then echo "[Resposta] Servidor $$servidor"; else echo "[Resposta] Nenhum servidor disponivel"; fi
@@ -50,7 +57,9 @@ start-random:  ## Iniciar requisicoes com algoritmo Random
 start-comparacao: validar-env  ## Comparar Round Robin e Random no mesmo painel
 	@python3 scripts/comparacao.py --quantidade $(QUANTIDADE) --intervalo $(INTERVALO)
 
-# Gerenciamento dos servidores
+############################################################
+# GERENCIAMENTO DOS SERVIDORES
+############################################################
 server1:  ## Subir apenas servidor 1
 	docker compose up -d server1
 
@@ -69,7 +78,9 @@ stop-server2:  ## Simular falha do servidor 2
 stop-server3:  ## Simular falha do servidor 3
 	docker compose stop server3
 
-# Testes de carga
+############################################################
+# TESTES DE CARGA
+############################################################
 test-demo:  ## Gerar 30 requisicoes para acompanhar nos logs
 	ab -q -l -n 30 -c 3 http://localhost:3001/
 
