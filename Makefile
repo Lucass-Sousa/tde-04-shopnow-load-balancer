@@ -28,13 +28,13 @@ logs:  ## Ver logs dos containers
 	docker compose logs -f --tail=0
 
 request:  ## Enviar uma requisicao (use ALGORITMO=random para Random)
-	@curl -s "http://localhost:3001/?algorithm=$(ALGORITMO)"
-	@echo ""
+	@servidor=$$(curl -s -D - -o /dev/null "http://localhost:3001/?algorithm=$(ALGORITMO)" | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
+	if [ -n "$$servidor" ]; then echo "[Resposta] Servidor $$servidor"; else echo "[Resposta] Nenhum servidor disponivel"; fi
 
 start:  ## Enviar requisicoes uma por vez conforme o arquivo .env
 	@for requisicao in $$(seq 1 $(QUANTIDADE)); do \
-		curl -s "http://localhost:3001/?algorithm=$(ALGORITMO)"; \
-		echo; \
+		servidor=$$(curl -s -D - -o /dev/null "http://localhost:3001/?algorithm=$(ALGORITMO)" | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
+		if [ -n "$$servidor" ]; then echo "[Resposta] Servidor $$servidor"; else echo "[Resposta] Nenhum servidor disponivel"; fi; \
 		if [ "$$requisicao" -lt "$(QUANTIDADE)" ]; then sleep $(INTERVALO); fi; \
 	done
 
@@ -66,14 +66,14 @@ stop-server3:  ## Simular falha do servidor 3
 
 demo-round-robin:  ## Demonstrar 9 requisicoes sequenciais com Round Robin
 	@for requisicao in 1 2 3 4 5 6 7 8 9; do \
-		curl -s http://localhost:3001/; \
-		echo; \
+		servidor=$$(curl -s -D - -o /dev/null http://localhost:3001/ | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
+		echo "[Round Robin] Servidor $$servidor"; \
 	done
 
 demo-random:  ## Demonstrar 9 requisicoes sequenciais com algoritmo Random
 	@for requisicao in 1 2 3 4 5 6 7 8 9; do \
-		curl -s 'http://localhost:3001/?algorithm=random'; \
-		echo; \
+		servidor=$$(curl -s -D - -o /dev/null 'http://localhost:3001/?algorithm=random' | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
+		echo "[Random] Servidor $$servidor"; \
 	done
 
 test-demo:  ## Gerar 30 requisicoes para acompanhar nos logs
