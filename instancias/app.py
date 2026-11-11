@@ -6,46 +6,46 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Lock
 
 
-class ShopNowServer(ThreadingHTTPServer):
-    def __init__(self, address, handler, server_id):
-        super().__init__(address, handler)
-        self.server_id = server_id
-        self.requests = 0
-        self.requests_lock = Lock()
+class ServidorShopNow(ThreadingHTTPServer):
+    def __init__(self, endereco, manipulador, identificador):
+        super().__init__(endereco, manipulador)
+        self.identificador = identificador
+        self.total_requisicoes = 0
+        self.trava_requisicoes = Lock()
 
 
-class RequestHandler(BaseHTTPRequestHandler):
+class ManipuladorRequisicao(BaseHTTPRequestHandler):
     def do_GET(self):
-        with self.server.requests_lock:
-            self.server.requests += 1
-            request_number = self.server.requests
+        with self.server.trava_requisicoes:
+            self.server.total_requisicoes += 1
+            numero_requisicao = self.server.total_requisicoes
 
-        payload = {
-            "service": "ShopNow",
-            "server_id": self.server.server_id,
-            "request_number": request_number,
-            "path": self.path,
+        dados = {
+            "servico": "ShopNow",
+            "servidor_id": self.server.identificador,
+            "numero_requisicao": numero_requisicao,
+            "caminho": self.path,
         }
-        body = json.dumps(payload).encode()
+        corpo = json.dumps(dados).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Content-Length", str(len(corpo)))
         self.end_headers()
-        self.wfile.write(body)
+        self.wfile.write(corpo)
 
     def log_message(self, format, *args):
         return
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--id", type=int, required=True)
-    parser.add_argument("--port", type=int, required=True)
-    args = parser.parse_args()
+    argumentos = argparse.ArgumentParser()
+    argumentos.add_argument("--id", type=int, required=True)
+    argumentos.add_argument("--port", type=int, required=True)
+    opcoes = argumentos.parse_args()
 
-    server = ShopNowServer(("0.0.0.0", args.port), RequestHandler, args.id)
-    print(f"ShopNow server {args.id} listening on port {args.port}", flush=True)
-    server.serve_forever()
+    servidor_http = ServidorShopNow(("0.0.0.0", opcoes.port), ManipuladorRequisicao, opcoes.id)
+    print(f"Servidor ShopNow {opcoes.id} escutando na porta {opcoes.port}", flush=True)
+    servidor_http.serve_forever()
 
 
 if __name__ == "__main__":

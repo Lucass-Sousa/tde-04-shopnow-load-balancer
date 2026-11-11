@@ -4,22 +4,22 @@ import random
 from threading import Lock
 
 
-class ServerSelector:
+class SelecionadorServidor:
     """Seleciona uma instância saudável conforme o algoritmo solicitado."""
 
     def __init__(self):
-        self.round_robin_index = 0
-        self.lock = Lock()
+        self.indice_round_robin = 0
+        self.trava = Lock()
 
-    def choose(self, servers, algorithm):
-        if not servers:
+    def escolher(self, servidores, algoritmo):
+        if not servidores:
             return None
-        if algorithm == "random":
-            return random.choice(servers)
-        return self._round_robin(servers)
+        if algoritmo == "random":
+            return random.choice(servidores)
+        return self._escolher_round_robin(servidores)
 
-    def _round_robin(self, servers):
-        with self.lock:
-            server = servers[self.round_robin_index % len(servers)]
-            self.round_robin_index += 1
-            return server
+    def _escolher_round_robin(self, servidores):
+        with self.trava:
+            servidor = servidores[self.indice_round_robin % len(servidores)]
+            self.indice_round_robin += 1
+            return servidor

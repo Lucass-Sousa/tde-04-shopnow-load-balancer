@@ -3,21 +3,21 @@
 from http.client import HTTPConnection, HTTPException
 
 
-def is_healthy(server):
+def verificar_saude(servidor):
     """Retorna se a instância respondeu com sucesso ao endpoint de saúde."""
     try:
-        connection = HTTPConnection(server.host, server.port, timeout=1)
-        connection.request("GET", "/health")
-        response = connection.getresponse()
-        response.read()
-        return response.status == 200
+        conexao = HTTPConnection(servidor.hospedeiro, servidor.porta, timeout=1)
+        conexao.request("GET", "/health")
+        resposta = conexao.getresponse()
+        resposta.read()
+        return resposta.status == 200
     except (OSError, HTTPException):
         return False
     finally:
-        if "connection" in locals():
-            connection.close()
+        if "conexao" in locals():
+            conexao.close()
 
 
-def healthy_servers(servers):
+def servidores_ativos(servidores):
     """Filtra somente as instâncias que estão saudáveis."""
-    return [server for server in servers if is_healthy(server)]
+    return [servidor for servidor in servidores if verificar_saude(servidor)]

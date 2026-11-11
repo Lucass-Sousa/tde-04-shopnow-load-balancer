@@ -5,76 +5,76 @@ from http.client import HTTPConnection, HTTPException
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-from algorithms import ServerSelector
-from health_check import healthy_servers, is_healthy
-from servers import SERVERS
+from algorithms import SelecionadorServidor
+from health_check import servidores_ativos, verificar_saude
+from servers import SERVIDORES
 
-SELECTOR = ServerSelector()
+SELECIONADOR = SelecionadorServidor()
 
 
-class RequestHandler(BaseHTTPRequestHandler):
+class ManipuladorRequisicao(BaseHTTPRequestHandler):
     def do_GET(self):
-        parsed_url = urlsplit(self.path)
-        if parsed_url.path == "/health":
-            self.send_health_status()
+        url_analisada = urlsplit(self.path)
+        if url_analisada.path == "/health":
+            self.enviar_status_saude()
             return
 
-        parameters = parse_qs(parsed_url.query)
-        algorithm = parameters.get("algorithm", ["round-robin"])[0]
-        if algorithm not in {"round-robin", "random"}:
-            self.send_json(400, {"error": "algorithm must be round-robin or random"})
+        parametros = parse_qs(url_analisada.query)
+        algoritmo = parametros.get("algorithm", ["round-robin"])[0]
+        if algoritmo not in {"round-robin", "random"}:
+            self.enviar_json(400, {"erro": "algorithm deve ser round-robin ou random"})
             return
 
-        server = SELECTOR.choose(healthy_servers(SERVERS), algorithm)
-        if server is None:
-            self.send_json(503, {"error": "all ShopNow servers are unavailable"})
+        servidor = SELECIONADOR.escolher(servidores_ativos(SERVIDORES), algoritmo)
+        if servidor is None:
+            self.enviar_json(503, {"erro": "todos os servidores ShopNow estao indisponiveis"})
             return
-        self.proxy_to(server)
+        self.encaminhar_requisicao(servidor)
 
-    def send_health_status(self):
-        status = [
-            {"id": server.identifier, "host": server.host, "active": is_healthy(server)}
-            for server in SERVERS
+    def enviar_status_saude(self):
+        status_servidores = [
+            {"id": servidor.identificador, "host": servidor.hospedeiro, "ativo": verificar_saude(servidor)}
+            for servidor in SERVIDORES
         ]
-        code = 200 if any(server["active"] for server in status) else 503
-        self.send_json(code, {"servers": status})
+        codigo = 200 if any(servidor["ativo"] for servidor in status_servidores) else 503
+        self.enviar_json(codigo, {"servidores": status_servidores})
 
-    def proxy_to(self, server):
+    def encaminhar_requisicao(self, servidor):
         try:
-            connection = HTTPConnection(server.host, server.port, timeout=3)
-            connection.request("GET", self.path)
-            response = connection.getresponse()
-            status = response.status
-            content_type = response.getheader("Content-Type", "application/octet-stream")
-            body = response.read()
-            connection.close()
+            conexao = HTTPConnection(servidor.hospedeiro, servidor.porta, timeout=3)
+            conexao.request("GET", self.path)
+            resposta = conexao.getresponse()
+            codigo = resposta.status
+            tipo_conteudo = resposta.getheader("Content-Type", "application/octet-stream")
+            corpo = resposta.read()
+            conexao.close()
         except (OSError, HTTPException):
-            self.send_json(502, {"error": "selected server became unavailable"})
+            self.enviar_json(502, {"erro": "o servidor selecionado ficou indisponivel"})
             return
 
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(body)))
-        self.send_header("X-ShopNow-Server", str(server.identifier))
+        self.send_response(codigo)
+        self.send_header("Content-Type", tipo_conteudo)
+        self.send_header("Content-Length", str(len(corpo)))
+        self.send_header("X-ShopNow-Server", str(servidor.identificador))
         self.end_headers()
-        self.wfile.write(body)
+        self.wfile.write(corpo)
 
-    def send_json(self, code, payload):
-        body = json.dumps(payload).encode()
-        self.send_response(code)
+    def enviar_json(self, codigo, dados):
+        corpo = json.dumps(dados).encode()
+        self.send_response(codigo)
         self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Content-Length", str(len(corpo)))
         self.end_headers()
-        self.wfile.write(body)
+        self.wfile.write(corpo)
 
     def log_message(self, format, *args):
         return
 
 
 def main():
-    server = ThreadingHTTPServer(("0.0.0.0", 3001), RequestHandler)
-    print("ShopNow load balancer listening on port 3001", flush=True)
-    server.serve_forever()
+    servidor_http = ThreadingHTTPServer(("0.0.0.0", 3001), ManipuladorRequisicao)
+    print("Balanceador ShopNow escutando na porta 3001", flush=True)
+    servidor_http.serve_forever()
 
 
 if __name__ == "__main__":
