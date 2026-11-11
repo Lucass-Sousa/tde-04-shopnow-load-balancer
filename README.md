@@ -22,6 +22,7 @@ Cada módulo tem uma responsabilidade única, sem fragmentar excessivamente o pr
 ## Execução
 
 ```bash
+make install
 make up
 curl http://localhost:3001/
 ```

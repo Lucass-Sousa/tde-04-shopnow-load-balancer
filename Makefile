@@ -1,7 +1,11 @@
-.PHONY: help up down logs server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load
+.PHONY: help install up down logs server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load
 
 help:  ## Mostrar esta ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "} {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+install:  ## Instalar Apache Benchmark para os testes de carga
+	sudo apt update
+	sudo apt install -y apache2-utils
 
 up:  ## Subir todos os containers Docker
 	@docker compose up -d --build --quiet-build --wait > /dev/null
