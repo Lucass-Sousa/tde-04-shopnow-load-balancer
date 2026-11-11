@@ -10,26 +10,47 @@ from urllib.request import urlopen
 
 
 LARGURA_BARRA = 30
+TERMINAL_INTERATIVO = sys.stdout.isatty()
+RESET = "\033[0m"
+CORES = {
+    "titulo": "\033[96m",
+    "progresso": "\033[93m",
+    1: "\033[94m",
+    2: "\033[92m",
+    3: "\033[95m",
+    "erro": "\033[91m",
+}
 
 
-def barra(valor, total):
+def colorir(texto, cor):
+    return f"{CORES[cor]}{texto}{RESET}" if TERMINAL_INTERATIVO else texto
+
+
+def barra(valor, total, cor):
     quantidade = round((valor / total) * LARGURA_BARRA) if total else 0
-    return "█" * quantidade + "·" * (LARGURA_BARRA - quantidade)
+    preenchida = colorir("█" * quantidade, cor)
+    return preenchida + "·" * (LARGURA_BARRA - quantidade)
 
 
 def mostrar_painel(algoritmo, quantidade, atual, contadores, falhas):
     progresso = (atual / quantidade) * 100
-    if sys.stdout.isatty():
+    if TERMINAL_INTERATIVO:
         os.system("clear")
-    print(f"ShopNow | Algoritmo: {algoritmo}")
-    print(f"Progresso: [{barra(atual, quantidade)}] {atual}/{quantidade} ({progresso:.0f}%)")
+    print(colorir(f"ShopNow | Algoritmo: {algoritmo}", "titulo"))
+    print(f"Progresso: [{barra(atual, quantidade, 'progresso')}] {atual}/{quantidade} ({progresso:.0f}%)")
     print()
     for identificador in (1, 2, 3):
         atendidas = contadores[identificador]
         percentual = (atendidas / atual) * 100 if atual else 0
-        print(f"Servidor {identificador}: [{barra(atendidas, quantidade)}] {atendidas} ({percentual:.0f}%)")
+        print(
+            colorir(
+                f"Servidor {identificador}: [{barra(atendidas, quantidade, identificador)}] "
+                f"{atendidas} ({percentual:.0f}%)",
+                identificador,
+            )
+        )
     if falhas:
-        print(f"\nRequisições sem servidor disponível: {falhas}")
+        print(colorir(f"\nRequisições sem servidor disponível: {falhas}", "erro"))
     print("\nAcompanhe as decisões detalhadas em outro terminal com: make logs", flush=True)
 
 
