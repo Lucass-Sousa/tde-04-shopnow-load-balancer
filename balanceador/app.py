@@ -3,9 +3,6 @@
 import json
 from http.client import HTTPConnection, HTTPException
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
-from queue import Empty, Full, Queue
-from threading import Lock
 from urllib.parse import parse_qs, urlsplit
 
 from algorithms import SelecionadorServidor
@@ -13,58 +10,17 @@ from health_check import servidores_ativos, verificar_saude
 from servers import SERVIDORES
 
 SELECIONADOR = SelecionadorServidor()
-CAMINHO_DASHBOARD = Path(__file__).parent / "templates" / "dashboard.html"
-DASHBOARD = CAMINHO_DASHBOARD.read_bytes()
-
-
-class CentralEventos:
-    """Distribui os eventos de requisição aos dashboards conectados."""
-
-    def __init__(self):
-        self.filas = set()
-        self.trava = Lock()
-
-    def inscrever(self):
-        fila = Queue(maxsize=100)
-        with self.trava:
-            self.filas.add(fila)
-        return fila
-
-    def remover(self, fila):
-        with self.trava:
-            self.filas.discard(fila)
-
-    def publicar(self, evento):
-        with self.trava:
-            filas = list(self.filas)
-        for fila in filas:
-            try:
-                fila.put_nowait(evento)
-            except Full:
-                pass
-
-
-EVENTOS = CentralEventos()
 
 
 class ManipuladorRequisicao(BaseHTTPRequestHandler):
-    protocol_version = "HTTP/1.1"
-
     def do_GET(self):
         url_analisada = urlsplit(self.path)
-        if url_analisada.path == "/dashboard":
-            self.enviar_dashboard()
-            return
-        if url_analisada.path == "/eventos":
-            self.transmitir_eventos()
-            return
         if url_analisada.path == "/health":
             self.enviar_status_saude()
             return
 
         parametros = parse_qs(url_analisada.query)
         algoritmo = parametros.get("algorithm", ["round-robin"])[0]
-        lote = parametros.get("lote", [""])[0]
         if algoritmo not in {"round-robin", "random"}:
             self.enviar_json(400, {"erro": "algorithm deve ser round-robin ou random"})
             return
@@ -73,38 +29,7 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
         if servidor is None:
             self.enviar_json(503, {"erro": "todos os servidores ShopNow estao indisponiveis"})
             return
-        self.encaminhar_requisicao(servidor, algoritmo, lote)
-
-    def enviar_dashboard(self):
-        self.send_response(200)
-        self.send_header("Content-Type", "text/html; charset=utf-8")
-        self.send_header("Content-Length", str(len(DASHBOARD)))
-        self.end_headers()
-        self.wfile.write(DASHBOARD)
-
-    def transmitir_eventos(self):
-        fila = EVENTOS.inscrever()
-        self.send_response(200)
-        self.send_header("Content-Type", "text/event-stream")
-        self.send_header("Cache-Control", "no-cache")
-        self.send_header("Connection", "keep-alive")
-        self.send_header("X-Accel-Buffering", "no")
-        self.end_headers()
-        try:
-            self.wfile.write(b": conectado\n\n")
-            self.wfile.flush()
-            while True:
-                try:
-                    evento = fila.get(timeout=15)
-                    mensagem = f"event: requisicao\\ndata: {json.dumps(evento)}\\n\\n"
-                except Empty:
-                    mensagem = ": ping\\n\\n"
-                self.wfile.write(mensagem.encode())
-                self.wfile.flush()
-        except (BrokenPipeError, ConnectionResetError):
-            pass
-        finally:
-            EVENTOS.remover(fila)
+        self.encaminhar_requisicao(servidor, algoritmo)
 
     def enviar_status_saude(self):
         status_servidores = [
@@ -114,7 +39,7 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
         codigo = 200 if any(servidor["ativo"] for servidor in status_servidores) else 503
         self.enviar_json(codigo, {"servidores": status_servidores})
 
-    def encaminhar_requisicao(self, servidor, algoritmo, lote):
+    def encaminhar_requisicao(self, servidor, algoritmo):
         try:
             conexao = HTTPConnection(servidor.hospedeiro, servidor.porta, timeout=3)
             conexao.request("GET", self.path)
@@ -134,9 +59,6 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(corpo)
         print(f"[Balanceador] {algoritmo} -> Servidor {servidor.identificador}", flush=True)
-        EVENTOS.publicar(
-            {"algoritmo": algoritmo, "servidor": servidor.identificador, "lote": lote}
-        )
 
     def enviar_json(self, codigo, dados):
         corpo = json.dumps(dados).encode()

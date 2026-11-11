@@ -9,7 +9,6 @@ Balanceador de carga em Python para três instâncias da ShopNow.
 - Algoritmos Round Robin e Random;
 - Proxy HTTP: o cliente acessa somente o balanceador;
 - Simulação de falha de instâncias com Docker Compose.
-- Dashboard em tempo real com SSE para comparar os algoritmos.
 
 ## Organização do balanceador
 
@@ -35,9 +34,9 @@ curl 'http://localhost:3001/?algorithm=random'
 
 O endpoint `http://localhost:3001/health` mostra quais instâncias estão disponíveis.
 
-## Dashboard em tempo real
+## Acompanhamento pelo terminal
 
-Abra `http://localhost:3001/dashboard`. Os botões Round Robin e Random geram requisições reais ao balanceador e mostram a distribuição entre as instâncias. Em outro terminal, use `make logs` para acompanhar as mesmas requisições.
+Em um terminal, execute `make logs`. Em outro, rode `make test-demo` para gerar 30 requisições e acompanhar a escolha do balanceador e o atendimento de cada instância. Para o teste de carga completo, use `make test-load`.
 
 ## Simulação de falha
 

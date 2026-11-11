@@ -1,4 +1,4 @@
-.PHONY: help up down logs server1 server2 server3 stop-server1 stop-server2 stop-server3 test-load
+.PHONY: help up down logs server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load
 
 help:  ## Mostrar esta ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "} {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -8,7 +8,6 @@ up:  ## Subir todos os containers Docker
 	@echo ""
 	@echo "ShopNow esta disponivel em:"
 	@echo "  Aplicacao:   http://localhost:3001/"
-	@echo "  Dashboard:   http://localhost:3001/dashboard"
 	@echo "  Health check: http://localhost:3001/health"
 	@echo "  Aleatorio:   http://localhost:3001/?algorithm=random"
 
@@ -37,6 +36,9 @@ stop-server2:  ## Simular falha do servidor 2
 
 stop-server3:  ## Simular falha do servidor 3
 	docker compose stop server3
+
+test-demo:  ## Gerar 30 requisicoes para acompanhar nos logs
+	ab -q -n 30 -c 3 http://localhost:3001/
 
 test-load:  ## Executar teste de carga com Apache Benchmark
 	ab -n 1000 -c 50 http://localhost:3001/
