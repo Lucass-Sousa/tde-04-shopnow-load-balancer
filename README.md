@@ -87,9 +87,10 @@ Enquanto `server2` estiver parado, ele não é selecionado pelo balanceador.
 Com o Apache Benchmark instalado, execute:
 
 ```bash
-make test-load
+make test-load-round-robin
+make test-load-random
 ```
 
-O comando realiza 1.000 requisições com concorrência de 50 clientes contra o balanceador.
+Cada comando realiza 1.000 requisições com concorrência de 50 clientes contra o balanceador, usando o algoritmo indicado. `make test-load` continua disponível como atalho para Round Robin.
 
 O parâmetro `-l` do Apache Benchmark aceita respostas com tamanho variável, pois cada instância inclui seu contador de requisições na resposta.

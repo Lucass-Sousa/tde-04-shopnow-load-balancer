@@ -1,4 +1,4 @@
-.PHONY: help install up down logs request start start-round-robin start-random start-comparacao validar-env server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load
+.PHONY: help install up down logs request start start-round-robin start-random start-comparacao validar-env server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load test-load-round-robin test-load-random
 
 # Configuração da demonstração
 -include .env
@@ -73,5 +73,11 @@ stop-server3:  ## Simular falha do servidor 3
 test-demo:  ## Gerar 30 requisicoes para acompanhar nos logs
 	ab -q -l -n 30 -c 3 http://localhost:3001/
 
-test-load:  ## Executar teste de carga com Apache Benchmark
+test-load:  ## Executar teste de carga Round Robin (atalho)
+	@$(MAKE) --no-print-directory test-load-round-robin
+
+test-load-round-robin:  ## Executar carga Apache Benchmark com Round Robin
 	ab -l -n 1000 -c 50 http://localhost:3001/
+
+test-load-random:  ## Executar carga Apache Benchmark com Random
+	ab -l -n 1000 -c 50 'http://localhost:3001/?algorithm=random'
