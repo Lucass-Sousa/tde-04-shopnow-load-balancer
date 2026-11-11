@@ -55,11 +55,30 @@ make request
 make request ALGORITMO=random
 ```
 
-Para enviar requisições continuamente, uma por vez, execute `make start` e interrompa com `Ctrl+C`. O intervalo padrão é um segundo:
+Para enviar requisições uma por vez com intervalo configurável, crie seu arquivo de ambiente e edite os valores:
+
+```bash
+cp .env.example .env
+```
+
+Exemplo de `.env`:
+
+```text
+ALGORITMO=round-robin
+QUANTIDADE=10
+INTERVALO=1
+```
+
+Depois, execute:
 
 ```bash
 make start
-make start ALGORITMO=random INTERVALO=0.5
+```
+
+Também é possível sobrescrever um valor para uma única execução:
+
+```bash
+make start ALGORITMO=random QUANTIDADE=20 INTERVALO=0.5
 ```
 
 ## Simulação de falha

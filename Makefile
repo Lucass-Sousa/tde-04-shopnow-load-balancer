@@ -1,6 +1,9 @@
 .PHONY: help install up down logs request start server1 server2 server3 stop-server1 stop-server2 stop-server3 demo-round-robin demo-random test-demo test-load
 
+-include .env
+
 ALGORITMO ?= round-robin
+QUANTIDADE ?= 10
 INTERVALO ?= 1
 
 help:  ## Mostrar esta ajuda
@@ -28,11 +31,11 @@ request:  ## Enviar uma requisicao (use ALGORITMO=random para Random)
 	@curl -s "http://localhost:3001/?algorithm=$(ALGORITMO)"
 	@echo ""
 
-start:  ## Enviar requisicoes uma por vez (Ctrl+C para parar)
-	@while true; do \
+start:  ## Enviar requisicoes uma por vez conforme o arquivo .env
+	@for requisicao in $$(seq 1 $(QUANTIDADE)); do \
 		curl -s "http://localhost:3001/?algorithm=$(ALGORITMO)"; \
 		echo; \
-		sleep $(INTERVALO); \
+		if [ "$$requisicao" -lt "$(QUANTIDADE)" ]; then sleep $(INTERVALO); fi; \
 	done
 
 ## Servidores
