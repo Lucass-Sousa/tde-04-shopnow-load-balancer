@@ -39,10 +39,10 @@ start:  ## Enviar requisicoes uma por vez conforme o arquivo .env
 	done
 
 start-round-robin:  ## Iniciar requisicoes com algoritmo Round Robin
-	@$(MAKE) start ALGORITMO=round-robin
+	@$(MAKE) --no-print-directory start ALGORITMO=round-robin
 
 start-random:  ## Iniciar requisicoes com algoritmo Random
-	@$(MAKE) start ALGORITMO=random
+	@$(MAKE) --no-print-directory start ALGORITMO=random
 
 ## Servidores
 
