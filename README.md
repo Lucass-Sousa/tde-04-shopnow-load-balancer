@@ -77,6 +77,8 @@ make start-random
 
 O arquivo `.env` é obrigatório para `make start`; não há valores padrão para quantidade ou intervalo.
 
+O comando atualiza barras no terminal durante a execução, mostrando a distribuição acumulada entre os três servidores. Em outro terminal, use `make logs` para ver cada decisão do balanceador.
+
 ## Simulação de falha
 
 ```bash

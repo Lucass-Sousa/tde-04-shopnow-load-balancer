@@ -32,11 +32,7 @@ request:  ## Enviar uma requisicao (use ALGORITMO=random para Random)
 start:  ## Enviar requisicoes uma por vez conforme o arquivo .env
 	@if [ ! -f .env ]; then echo "Erro: arquivo .env nao encontrado. Execute: cp .env.example .env"; exit 1; fi
 	@if [ -z "$(QUANTIDADE)" ] || [ -z "$(INTERVALO)" ]; then echo "Erro: preencha QUANTIDADE e INTERVALO no arquivo .env"; exit 1; fi
-	@for requisicao in $$(seq 1 $(QUANTIDADE)); do \
-		servidor=$$(curl -s -D - -o /dev/null "http://localhost:3001/?algorithm=$(ALGORITMO)" | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
-		if [ -n "$$servidor" ]; then echo "[Resposta] Servidor $$servidor"; else echo "[Resposta] Nenhum servidor disponivel"; fi; \
-		if [ "$$requisicao" -lt "$(QUANTIDADE)" ]; then sleep $(INTERVALO); fi; \
-	done
+	@python3 scripts/monitor.py --algoritmo $(ALGORITMO) --quantidade $(QUANTIDADE) --intervalo $(INTERVALO)
 
 start-round-robin:  ## Iniciar requisicoes com algoritmo Round Robin
 	@$(MAKE) --no-print-directory start ALGORITMO=round-robin
