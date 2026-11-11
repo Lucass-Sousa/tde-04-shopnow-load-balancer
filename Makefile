@@ -4,7 +4,12 @@ help:  ## Mostrar esta ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "} {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 up:  ## Subir todos os containers Docker
-	docker compose up -d --build
+	@docker compose up -d --build --quiet-build --wait > /dev/null
+	@echo ""
+	@echo "ShopNow esta disponivel em:"
+	@echo "  Aplicacao:   http://localhost:3001/"
+	@echo "  Health check: http://localhost:3001/health"
+	@echo "  Aleatorio:   http://localhost:3001/?algorithm=random"
 
 down:  ## Derribar todos os containers
 	docker compose down
