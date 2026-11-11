@@ -1,6 +1,6 @@
 # TDE-04 - ShopNow Load Balancer
 
-Balanceador de carga em Python para três instâncias da ShopNow.
+Três instâncias da ShopNow em Python, distribuídas por um balanceador de carga Nginx.
 
 ## Pré-requisitos
 
@@ -39,19 +39,19 @@ O navegador do Windows acessa a aplicação em `http://localhost:3001`.
 ## Recursos
 
 - Três instâncias independentes do site (`server1`, `server2` e `server3`);
-- Health check HTTP em cada requisição;
-- Algoritmos Round Robin e Random;
-- Proxy HTTP: o cliente acessa somente o balanceador;
+- Nginx como proxy reverso e único ponto de entrada;
+- Algoritmos Round Robin e Least Connections;
+- Desvio passivo de instâncias indisponíveis (`max_fails` e `fail_timeout`);
 - Simulação de falha de instâncias com Docker Compose.
 
-## Organização do balanceador
+## Organização
 
-Cada módulo tem uma responsabilidade única, sem fragmentar excessivamente o projeto:
+O arquivo `nginx/nginx.conf` define os dois grupos de servidores:
 
-- `app.py`: recebe a requisição HTTP, coordena os demais módulos e encaminha a chamada;
-- `servers.py`: define as instâncias monitoradas;
-- `health_check.py`: verifica a disponibilidade das instâncias;
-- `algorithms.py`: escolhe uma instância por Round Robin ou Random;
+- `shopnow_round_robin`: algoritmo padrão do Nginx;
+- `shopnow_least_connections`: usa a diretiva `least_conn`.
+
+As aplicações em `instancias/app.py` representam os três servidores da loja e retornam o cabeçalho `X-ShopNow-Server`, usado pelos scripts para identificar qual instância atendeu cada requisição.
 
 ## Execução
 
@@ -61,23 +61,23 @@ make up
 curl http://localhost:3001/
 ```
 
-O algoritmo padrão é Round Robin. Para selecionar o aleatório, use:
+O algoritmo padrão é Round Robin. Para selecionar Least Connections, use:
 
 ```bash
-curl 'http://localhost:3001/?algorithm=random'
+curl 'http://localhost:3001/?algorithm=least-conn'
 ```
 
-O endpoint `http://localhost:3001/health` mostra quais instâncias estão disponíveis.
+O endpoint `http://localhost:3001/health` é encaminhado pelo Nginx para uma instância disponível.
 
 ## Acompanhamento pelo terminal
 
-Em um terminal, execute `make logs`. Ele exibirá somente as novas escolhas do balanceador e os atendimentos das instâncias.
+Em um terminal, execute `make logs` para acompanhar os atendimentos das instâncias.
 
 Para enviar e observar uma requisição por vez, use. O terminal exibirá somente o servidor que respondeu:
 
 ```bash
 make request
-make request ALGORITMO=random
+make request ALGORITMO=least-conn
 ```
 
 Para enviar requisições uma por vez com intervalo configurável, crie seu arquivo de ambiente e edite os valores:
@@ -97,13 +97,13 @@ Depois, escolha o algoritmo pelo Makefile:
 
 ```bash
 make start-round-robin
-make start-random
+make start-least-conn
 make start-comparacao
 ```
 
 O arquivo `.env` é obrigatório para `make start`; não há valores padrão para quantidade ou intervalo.
 
-Os dois primeiros comandos atualizam barras no terminal durante a execução, mostrando a distribuição de um algoritmo. O comando `make start-comparacao` envia uma requisição Round Robin e uma Random por ciclo, exibindo as duas distribuições no mesmo painel. Em outro terminal, use `make logs` para ver cada decisão do balanceador.
+Os dois primeiros comandos atualizam barras no terminal durante a execução, mostrando a distribuição de um algoritmo. O comando `make start-comparacao` envia uma requisição Round Robin e uma Least Connections por ciclo, exibindo as duas distribuições no mesmo painel.
 
 ## Simulação de falha
 
@@ -122,7 +122,7 @@ Com o Apache Benchmark instalado, execute:
 
 ```bash
 make test-load-round-robin
-make test-load-random
+make test-load-least-conn
 ```
 
 Cada comando realiza 1.000 requisições com concorrência de 50 clientes contra o balanceador, usando o algoritmo indicado. `make test-load` continua disponível como atalho para Round Robin.

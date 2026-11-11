@@ -67,7 +67,7 @@ def enviar_requisicao(algoritmo, identificador):
 
 def main():
     argumentos = argparse.ArgumentParser()
-    argumentos.add_argument("--algoritmo", choices=("round-robin", "random"), required=True)
+    argumentos.add_argument("--algoritmo", choices=("round-robin", "least-conn"), required=True)
     argumentos.add_argument("--quantidade", type=int, required=True)
     argumentos.add_argument("--intervalo", type=float, required=True)
     opcoes = argumentos.parse_args()

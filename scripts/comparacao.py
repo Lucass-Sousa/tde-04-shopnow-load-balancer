@@ -1,4 +1,4 @@
-"""Compara Round Robin e Random no mesmo painel do terminal."""
+"""Compara Round Robin e Least Connections no mesmo painel do terminal."""
 
 import argparse
 import os
@@ -8,7 +8,7 @@ from collections import Counter
 from monitor import TERMINAL_INTERATIVO, barra, colorir, enviar_requisicao
 
 
-ALGORITMOS = (("round-robin", "RR"), ("random", "RND"))
+ALGORITMOS = (("round-robin", "RR"), ("least-conn", "LC"))
 
 
 def mostrar_distribuicao(algoritmo, contadores, quantidade, cor):
@@ -27,7 +27,7 @@ def mostrar_painel(atual, quantidade, contadores, falhas, ultima_resposta):
     print(f"Última resposta: {ultima_resposta}\n")
     mostrar_distribuicao("Round Robin", contadores["round-robin"], atual, 1)
     print()
-    mostrar_distribuicao("Random", contadores["random"], atual, 3)
+    mostrar_distribuicao("Least Connections", contadores["least-conn"], atual, 3)
     if falhas:
         print(colorir(f"\nRequisições sem servidor disponível: {falhas}", "erro"))
     print("\nAcompanhe as decisões detalhadas em outro terminal com: make logs", flush=True)

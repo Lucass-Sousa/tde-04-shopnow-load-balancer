@@ -1,4 +1,4 @@
-.PHONY: help install up down logs request start start-round-robin start-random start-comparacao validar-env server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load test-load-round-robin test-load-random
+.PHONY: help install up down logs request start start-round-robin start-least-conn start-comparacao validar-env server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load test-load-round-robin test-load-least-conn
 
 ############################################################
 # CONFIGURAÇÃO DA DEMONSTRAÇÃO
@@ -26,7 +26,7 @@ up:  ## Subir todos os containers Docker
 	@echo "ShopNow esta disponivel em:"
 	@echo "  Aplicacao:   http://localhost:3001/"
 	@echo "  Health check: http://localhost:3001/health"
-	@echo "  Aleatorio:   http://localhost:3001/?algorithm=random"
+	@echo "  Least Connections: http://localhost:3001/?algorithm=least-conn"
 
 down:  ## Derribar todos os containers
 	docker compose down
@@ -37,7 +37,7 @@ logs:  ## Ver logs dos containers
 ############################################################
 # DEMONSTRAÇÕES NO TERMINAL
 ############################################################
-request:  ## Enviar uma requisicao (ALGORITMO=random para Random)
+request:  ## Enviar uma requisicao (ALGORITMO=least-conn para Least Connections)
 	@servidor=$$(curl -s -D - -o /dev/null "http://localhost:3001/?algorithm=$(ALGORITMO)" | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
 	if [ -n "$$servidor" ]; then echo "[Resposta] Servidor $$servidor"; else echo "[Resposta] Nenhum servidor disponivel"; fi
 
@@ -51,10 +51,10 @@ start: validar-env
 start-round-robin:  ## Iniciar requisicoes com algoritmo Round Robin
 	@$(MAKE) --no-print-directory start ALGORITMO=round-robin
 
-start-random:  ## Iniciar requisicoes com algoritmo Random
-	@$(MAKE) --no-print-directory start ALGORITMO=random
+start-least-conn:  ## Iniciar requisicoes com Least Connections
+	@$(MAKE) --no-print-directory start ALGORITMO=least-conn
 
-start-comparacao: validar-env  ## Comparar Round Robin e Random no mesmo painel
+start-comparacao: validar-env  ## Comparar Round Robin e Least Connections no mesmo painel
 	@python3 scripts/comparacao.py --quantidade $(QUANTIDADE) --intervalo $(INTERVALO)
 
 ############################################################
@@ -90,5 +90,5 @@ test-load:  ## Executar teste de carga Round Robin (atalho)
 test-load-round-robin:  ## Executar carga Apache Benchmark com Round Robin
 	ab -l -n 1000 -c 50 http://localhost:3001/
 
-test-load-random:  ## Executar carga Apache Benchmark com Random
-	ab -l -n 1000 -c 50 'http://localhost:3001/?algorithm=random'
+test-load-least-conn:  ## Executar carga Apache Benchmark com Least Connections
+	ab -l -n 1000 -c 50 'http://localhost:3001/?algorithm=least-conn'

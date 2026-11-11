@@ -7,6 +7,8 @@ from threading import Lock
 
 
 class ServidorShopNow(ThreadingHTTPServer):
+    request_queue_size = 128
+
     def __init__(self, endereco, manipulador, identificador):
         super().__init__(endereco, manipulador)
         self.identificador = identificador
@@ -41,6 +43,7 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(corpo)))
+        self.send_header("X-ShopNow-Server", str(self.server.identificador))
         self.end_headers()
         self.wfile.write(corpo)
 
