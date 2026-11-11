@@ -1,62 +1,15 @@
-"""Balanceador HTTP da ShopNow com health check e dois algoritmos."""
+"""Camada HTTP e orquestração do balanceador da ShopNow."""
 
 import json
-import random
-from dataclasses import dataclass
-from http.client import HTTPConnection
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from threading import Lock
 from urllib.parse import parse_qs, urlsplit
 
+from algorithms import ServerSelector
+from config import SERVERS
+from health_check import healthy_servers, is_healthy
+from proxy import forward_request
 
-@dataclass(frozen=True)
-class Server:
-    identifier: int
-    host: str
-    port: int
-
-
-SERVERS = (
-    Server(1, "server1", 3002),
-    Server(2, "server2", 3003),
-    Server(3, "server3", 3004),
-)
-
-
-class LoadBalancer:
-    def __init__(self, servers):
-        self.servers = servers
-        self.round_robin_index = 0
-        self.lock = Lock()
-
-    @staticmethod
-    def is_healthy(server):
-        try:
-            connection = HTTPConnection(server.host, server.port, timeout=1)
-            connection.request("GET", "/health")
-            response = connection.getresponse()
-            response.read()
-            connection.close()
-            return response.status == 200
-        except OSError:
-            return False
-
-    def healthy_servers(self):
-        return [server for server in self.servers if self.is_healthy(server)]
-
-    def choose(self, algorithm):
-        healthy = self.healthy_servers()
-        if not healthy:
-            return None
-        if algorithm == "random":
-            return random.choice(healthy)
-        with self.lock:
-            server = healthy[self.round_robin_index % len(healthy)]
-            self.round_robin_index += 1
-            return server
-
-
-BALANCER = LoadBalancer(SERVERS)
+SELECTOR = ServerSelector()
 
 
 class RequestHandler(BaseHTTPRequestHandler):
@@ -72,7 +25,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_json(400, {"error": "algorithm must be round-robin or random"})
             return
 
-        server = BALANCER.choose(algorithm)
+        server = SELECTOR.choose(healthy_servers(SERVERS), algorithm)
         if server is None:
             self.send_json(503, {"error": "all ShopNow servers are unavailable"})
             return
@@ -80,7 +33,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def send_health_status(self):
         status = [
-            {"id": server.identifier, "host": server.host, "active": BALANCER.is_healthy(server)}
+            {"id": server.identifier, "host": server.host, "active": is_healthy(server)}
             for server in SERVERS
         ]
         code = 200 if any(server["active"] for server in status) else 503
@@ -88,17 +41,12 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def proxy_to(self, server):
         try:
-            connection = HTTPConnection(server.host, server.port, timeout=3)
-            connection.request("GET", self.path)
-            response = connection.getresponse()
-            body = response.read()
-            content_type = response.getheader("Content-Type", "application/octet-stream")
-            connection.close()
-        except OSError:
+            status, content_type, body = forward_request(server, self.path)
+        except ConnectionError:
             self.send_json(502, {"error": "selected server became unavailable"})
             return
 
-        self.send_response(response.status)
+        self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
         self.send_header("X-ShopNow-Server", str(server.identifier))
