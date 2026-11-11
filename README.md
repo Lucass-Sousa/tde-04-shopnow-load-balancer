@@ -2,6 +2,13 @@
 
 Balanceador de carga em Python para três instâncias da ShopNow.
 
+## Pré-requisitos
+
+- Docker Engine ou Docker Desktop com Docker Compose;
+- `make`;
+- Python 3 para os monitores executados no terminal;
+- Apache Benchmark (`ab`), instalado com `make install` em sistemas Ubuntu/Debian.
+
 ## Recursos
 
 - Três instâncias independentes do site (`server1`, `server2` e `server3`);
@@ -94,3 +101,13 @@ make test-load-random
 Cada comando realiza 1.000 requisições com concorrência de 50 clientes contra o balanceador, usando o algoritmo indicado. `make test-load` continua disponível como atalho para Round Robin.
 
 O parâmetro `-l` do Apache Benchmark aceita respostas com tamanho variável, pois cada instância inclui seu contador de requisições na resposta.
+
+No resultado, os indicadores principais são:
+
+```text
+Complete requests:      1000
+Failed requests:        0
+Requests per second:    <valor variável>
+```
+
+`Complete requests` confirma que as 1.000 requisições foram processadas; `Failed requests: 0` indica que nenhuma falhou. O valor de `Requests per second` varia conforme a máquina utilizada e a carga do sistema.
