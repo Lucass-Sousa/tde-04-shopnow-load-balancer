@@ -1,0 +1,46 @@
+version: '3.8'
+
+networks:
+  shopnow-net:
+    driver: bridge
+
+services:
+
+  balanceador:
+    build: ./balanceador
+    container_name: shopnow-balancer
+    ports:
+      - "3001:3001"
+    networks:
+      - shopnow-net
+    depends_on:
+      - server1
+      - server2
+      - server3
+
+  server1:
+    build: ./servers/server1
+    container_name: shopnow-server1
+    ports:
+      - "3002:3002"
+    networks:
+      - shopnow-net
+    restart: unless-stopped
+
+  server2:
+    build: ./servers/server2
+    container_name: shopnow-server2
+    ports:
+      - "3003:3003"
+    networks:
+      - shopnow-net
+    restart: unless-stopped
+
+  server3:
+    build: ./servers/server3
+    container_name: shopnow-server3
+    ports:
+      - "3004:3004"
+    networks:
+      - shopnow-net
+    restart: unless-stopped
