@@ -64,6 +64,7 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
 
         parametros = parse_qs(url_analisada.query)
         algoritmo = parametros.get("algorithm", ["round-robin"])[0]
+        lote = parametros.get("lote", [""])[0]
         if algoritmo not in {"round-robin", "random"}:
             self.enviar_json(400, {"erro": "algorithm deve ser round-robin ou random"})
             return
@@ -72,7 +73,7 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
         if servidor is None:
             self.enviar_json(503, {"erro": "todos os servidores ShopNow estao indisponiveis"})
             return
-        self.encaminhar_requisicao(servidor, algoritmo)
+        self.encaminhar_requisicao(servidor, algoritmo, lote)
 
     def enviar_dashboard(self):
         self.send_response(200)
@@ -113,7 +114,7 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
         codigo = 200 if any(servidor["ativo"] for servidor in status_servidores) else 503
         self.enviar_json(codigo, {"servidores": status_servidores})
 
-    def encaminhar_requisicao(self, servidor, algoritmo):
+    def encaminhar_requisicao(self, servidor, algoritmo, lote):
         try:
             conexao = HTTPConnection(servidor.hospedeiro, servidor.porta, timeout=3)
             conexao.request("GET", self.path)
@@ -133,7 +134,9 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(corpo)
         print(f"[Balanceador] {algoritmo} -> Servidor {servidor.identificador}", flush=True)
-        EVENTOS.publicar({"algoritmo": algoritmo, "servidor": servidor.identificador})
+        EVENTOS.publicar(
+            {"algoritmo": algoritmo, "servidor": servidor.identificador, "lote": lote}
+        )
 
     def enviar_json(self, codigo, dados):
         corpo = json.dumps(dados).encode()

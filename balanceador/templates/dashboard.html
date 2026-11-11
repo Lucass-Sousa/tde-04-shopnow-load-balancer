@@ -52,6 +52,7 @@
     let concluidas = 0;
     let contadores = { 1: 0, 2: 0, 3: 0 };
     let sseConectado = false;
+    let loteAtual = '';
 
     const eventos = new EventSource('/eventos');
     eventos.onopen = () => {
@@ -64,7 +65,7 @@
     };
     eventos.addEventListener('requisicao', (evento) => {
       const dado = JSON.parse(evento.data);
-      if (executando && dado.algoritmo === algoritmoAtual) {
+      if (dado.lote === loteAtual && dado.algoritmo === algoritmoAtual) {
         contadores[dado.servidor] += 1;
         atualizarTela();
       }
@@ -100,6 +101,7 @@
       }
       parar();
       algoritmoAtual = algoritmo;
+      loteAtual = `${Date.now()}-${Math.random()}`;
       total = Number(document.getElementById('quantidade').value) || 300;
       concluidas = 0;
       contadores = { 1: 0, 2: 0, 3: 0 };
@@ -119,7 +121,7 @@
       while (executando && concluidas < total) {
         concluidas += 1;
         try {
-          const resposta = await fetch(`/requisicao?algorithm=${algoritmoAtual}`);
+          const resposta = await fetch(`/requisicao?algorithm=${algoritmoAtual}&lote=${loteAtual}`);
           await resposta.text();
         } catch (_) {}
         atualizarTela();
