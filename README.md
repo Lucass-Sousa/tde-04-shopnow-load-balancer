@@ -48,6 +48,13 @@ make demo-random
 
 O primeiro deve alternar os servidores em ciclo; o segundo deve escolhê-los em ordem variável. Para gerar 30 requisições concorrentes, use `make test-demo`. Para o teste de carga completo, use `make test-load`.
 
+Para enviar e observar uma requisição por vez, use:
+
+```bash
+make request
+make request ALGORITMO=random
+```
+
 ## Simulação de falha
 
 ```bash

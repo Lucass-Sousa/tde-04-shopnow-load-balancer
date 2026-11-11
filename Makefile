@@ -1,4 +1,6 @@
-.PHONY: help install up down logs server1 server2 server3 stop-server1 stop-server2 stop-server3 demo-round-robin demo-random test-demo test-load
+.PHONY: help install up down logs request server1 server2 server3 stop-server1 stop-server2 stop-server3 demo-round-robin demo-random test-demo test-load
+
+ALGORITMO ?= round-robin
 
 help:  ## Mostrar esta ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "} {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -20,6 +22,10 @@ down:  ## Derribar todos os containers
 
 logs:  ## Ver logs dos containers
 	docker compose logs -f --tail=0
+
+request:  ## Enviar uma requisicao (use ALGORITMO=random para Random)
+	@curl -s "http://localhost:3001/?algorithm=$(ALGORITMO)"
+	@echo ""
 
 ## Servidores
 
