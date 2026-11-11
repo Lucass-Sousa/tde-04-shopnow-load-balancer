@@ -37,6 +37,7 @@
     <section class="resumo">
       <span class="status" id="status">Conectando aos eventos...</span>
       <span id="progresso">0 requisições concluídas</span>
+      <span id="ultimo-evento">Eventos SSE: aguardando</span>
     </section>
 
     <section class="cartoes">
@@ -65,10 +66,8 @@
     };
     eventos.addEventListener('requisicao', (evento) => {
       const dado = JSON.parse(evento.data);
-      if (dado.lote === loteAtual && dado.algoritmo === algoritmoAtual) {
-        contadores[dado.servidor] += 1;
-        atualizarTela();
-      }
+      document.getElementById('ultimo-evento').textContent =
+        `Evento SSE: ${dado.algoritmo} → servidor ${dado.servidor}`;
     });
 
     function atualizarTela() {
@@ -101,7 +100,8 @@
       }
       parar();
       algoritmoAtual = algoritmo;
-      loteAtual = `${Date.now()}-${Math.random()}`;
+      const lote = `${Date.now()}-${Math.random()}`;
+      loteAtual = lote;
       total = Number(document.getElementById('quantidade').value) || 300;
       concluidas = 0;
       contadores = { 1: 0, 2: 0, 3: 0 };
@@ -109,20 +109,25 @@
       document.getElementById('status').textContent = `Executando ${algoritmo}`;
       atualizarTela();
 
-      const trabalhadores = Array.from({ length: Math.min(10, total) }, () => trabalhador());
+      const trabalhadores = Array.from(
+        { length: Math.min(10, total) },
+        () => trabalhador(lote, algoritmoAtual),
+      );
       await Promise.all(trabalhadores);
-      if (executando) {
+      if (executando && loteAtual === lote) {
         executando = false;
         document.getElementById('status').textContent = 'Teste concluído';
       }
     }
 
-    async function trabalhador() {
-      while (executando && concluidas < total) {
+    async function trabalhador(lote, algoritmo) {
+      while (executando && lote === loteAtual && concluidas < total) {
         concluidas += 1;
         try {
-          const resposta = await fetch(`/requisicao?algorithm=${algoritmoAtual}&lote=${loteAtual}`);
+          const resposta = await fetch(`/requisicao?algorithm=${algoritmo}&lote=${lote}`);
           await resposta.text();
+          const servidor = resposta.headers.get('X-ShopNow-Server');
+          if (servidor && lote === loteAtual) contadores[servidor] += 1;
         } catch (_) {}
         atualizarTela();
         await new Promise((resolver) => setTimeout(resolver, 60));
@@ -135,6 +140,7 @@
     }
 
     atualizarSaude();
+    atualizarTela();
     setInterval(atualizarSaude, 1000);
   </script>
 </body>
