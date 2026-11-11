@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopNow | Monitoramento</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { background: #f4f7fb; color: #1f2937; font-family: Arial, sans-serif; margin: 0; }
+    main { margin: auto; max-width: 850px; padding: 32px 20px; }
+    h1 { margin-bottom: 4px; } p { color: #4b5563; }
+    .controles, .resumo { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
+    button { border: 0; border-radius: 8px; color: white; cursor: pointer; font-size: 1rem; font-weight: bold; padding: 12px 16px; }
+    .round-robin { background: #4f46e5; } .random { background: #0891b2; } .parar { background: #6b7280; }
+    input { border: 1px solid #d1d5db; border-radius: 6px; padding: 10px; width: 90px; }
+    .cartoes { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); }
+    .cartao { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 18px; }
+    .cartao.inativo { opacity: .45; } .ativo { color: #15803d; } .inativo-texto { color: #b91c1c; }
+    .barra { background: #e5e7eb; border-radius: 5px; height: 12px; margin: 14px 0 8px; overflow: hidden; }
+    .barra > div { background: #4f46e5; height: 100%; transition: width .15s; }
+    .numero { font-size: 1.7rem; font-weight: bold; } .status { font-weight: bold; }
+    @media (max-width: 600px) { .cartoes { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>ShopNow: monitoramento do balanceador</h1>
+    <p>Inicie requisições reais e compare os algoritmos em tempo real.</p>
+
+    <section class="controles">
+      <label>Requisições <input id="quantidade" type="number" min="1" value="300"></label>
+      <button class="round-robin" onclick="iniciar('round-robin')">▶ Round Robin</button>
+      <button class="random" onclick="iniciar('random')">▶ Random</button>
+      <button class="parar" onclick="parar()">■ Parar</button>
+    </section>
+
+    <section class="resumo">
+      <span class="status" id="status">Aguardando início</span>
+      <span id="progresso">0 requisições concluídas</span>
+    </section>
+
+    <section class="cartoes">
+      <article class="cartao" id="cartao-1"><strong>Servidor 1</strong><p id="saude-1">Verificando...</p><div class="barra"><div id="barra-1"></div></div><span class="numero" id="contador-1">0</span> requisições</article>
+      <article class="cartao" id="cartao-2"><strong>Servidor 2</strong><p id="saude-2">Verificando...</p><div class="barra"><div id="barra-2"></div></div><span class="numero" id="contador-2">0</span> requisições</article>
+      <article class="cartao" id="cartao-3"><strong>Servidor 3</strong><p id="saude-3">Verificando...</p><div class="barra"><div id="barra-3"></div></div><span class="numero" id="contador-3">0</span> requisições</article>
+    </section>
+  </main>
+  <script>
+    let executando = false;
+    let algoritmoAtual = '';
+    let total = 0;
+    let concluidas = 0;
+    let contadores = { 1: 0, 2: 0, 3: 0 };
+
+    const eventos = new EventSource('/eventos');
+    eventos.addEventListener('requisicao', (evento) => {
+      const dado = JSON.parse(evento.data);
+      if (executando && dado.algoritmo === algoritmoAtual) {
+        contadores[dado.servidor] += 1;
+        atualizarTela();
+      }
+    });
+
+    function atualizarTela() {
+      const maior = Math.max(1, ...Object.values(contadores));
+      for (const id of [1, 2, 3]) {
+        document.getElementById(`contador-${id}`).textContent = contadores[id];
+        document.getElementById(`barra-${id}`).style.width = `${(contadores[id] / maior) * 100}%`;
+      }
+      document.getElementById('progresso').textContent = `${concluidas} de ${total} requisições concluídas`;
+    }
+
+    async function atualizarSaude() {
+      try {
+        const resposta = await fetch('/health');
+        const dados = await resposta.json();
+        dados.servidores.forEach((servidor) => {
+          const cartao = document.getElementById(`cartao-${servidor.id}`);
+          const texto = document.getElementById(`saude-${servidor.id}`);
+          cartao.classList.toggle('inativo', !servidor.ativo);
+          texto.textContent = servidor.ativo ? '● Ativo' : '● Indisponível';
+          texto.className = servidor.ativo ? 'ativo' : 'inativo-texto';
+        });
+      } catch (_) {}
+    }
+
+    async function iniciar(algoritmo) {
+      parar();
+      algoritmoAtual = algoritmo;
+      total = Number(document.getElementById('quantidade').value) || 300;
+      concluidas = 0;
+      contadores = { 1: 0, 2: 0, 3: 0 };
+      executando = true;
+      document.getElementById('status').textContent = `Executando ${algoritmo}`;
+      atualizarTela();
+
+      const trabalhadores = Array.from({ length: Math.min(10, total) }, () => trabalhador());
+      await Promise.all(trabalhadores);
+      if (executando) {
+        executando = false;
+        document.getElementById('status').textContent = 'Teste concluído';
+      }
+    }
+
+    async function trabalhador() {
+      while (executando && concluidas < total) {
+        concluidas += 1;
+        try {
+          const resposta = await fetch(`/requisicao?algorithm=${algoritmoAtual}`);
+          await resposta.text();
+        } catch (_) {}
+        atualizarTela();
+        await new Promise((resolver) => setTimeout(resolver, 60));
+      }
+    }
+
+    function parar() {
+      executando = false;
+      document.getElementById('status').textContent = 'Teste interrompido';
+    }
+
+    atualizarSaude();
+    setInterval(atualizarSaude, 1000);
+  </script>
+</body>
+</html>

@@ -8,6 +8,7 @@ up:  ## Subir todos os containers Docker
 	@echo ""
 	@echo "ShopNow esta disponivel em:"
 	@echo "  Aplicacao:   http://localhost:3001/"
+	@echo "  Dashboard:   http://localhost:3001/dashboard"
 	@echo "  Health check: http://localhost:3001/health"
 	@echo "  Aleatorio:   http://localhost:3001/?algorithm=random"
 

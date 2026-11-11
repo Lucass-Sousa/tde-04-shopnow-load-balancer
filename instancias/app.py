@@ -29,6 +29,10 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
         with self.server.trava_requisicoes:
             self.server.total_requisicoes += 1
             numero_requisicao = self.server.total_requisicoes
+        print(
+            f"[Servidor {self.server.identificador}] Requisicao {numero_requisicao} atendida",
+            flush=True,
+        )
 
         pagina = self.montar_pagina(numero_requisicao)
         corpo = pagina.encode()
