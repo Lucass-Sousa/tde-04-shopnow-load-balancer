@@ -1,16 +1,20 @@
-.PHONY: help install up down logs request start start-round-robin start-random server1 server2 server3 stop-server1 stop-server2 stop-server3 demo-round-robin demo-random test-demo test-load
+.PHONY: help install up down logs request start start-round-robin start-random start-comparacao validar-env server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load
 
+# Configuração da demonstração
 -include .env
 
 ALGORITMO ?= round-robin
 
+# Ajuda
 help:  ## Mostrar esta ajuda
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "} {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "} {printf "\033[36m%-24s\033[0m %s\n", $$1, $$2}'
 
+# Dependências
 install:  ## Instalar Apache Benchmark para os testes de carga
 	sudo apt update
 	sudo apt install -y apache2-utils
 
+# Ciclo de vida da aplicação
 up:  ## Subir todos os containers Docker
 	@docker compose up -d --build --quiet-build --wait > /dev/null
 	@echo ""
@@ -25,13 +29,16 @@ down:  ## Derribar todos os containers
 logs:  ## Ver logs dos containers
 	docker compose logs -f --tail=0
 
-request:  ## Enviar uma requisicao (use ALGORITMO=random para Random)
+# Demonstrações no terminal
+request:  ## Enviar uma requisicao (ALGORITMO=random para Random)
 	@servidor=$$(curl -s -D - -o /dev/null "http://localhost:3001/?algorithm=$(ALGORITMO)" | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
 	if [ -n "$$servidor" ]; then echo "[Resposta] Servidor $$servidor"; else echo "[Resposta] Nenhum servidor disponivel"; fi
 
-start:  ## Enviar requisicoes uma por vez conforme o arquivo .env
+validar-env:
 	@if [ ! -f .env ]; then echo "Erro: arquivo .env nao encontrado. Execute: cp .env.example .env"; exit 1; fi
 	@if [ -z "$(QUANTIDADE)" ] || [ -z "$(INTERVALO)" ]; then echo "Erro: preencha QUANTIDADE e INTERVALO no arquivo .env"; exit 1; fi
+
+start: validar-env
 	@python3 scripts/monitor.py --algoritmo $(ALGORITMO) --quantidade $(QUANTIDADE) --intervalo $(INTERVALO)
 
 start-round-robin:  ## Iniciar requisicoes com algoritmo Round Robin
@@ -40,8 +47,10 @@ start-round-robin:  ## Iniciar requisicoes com algoritmo Round Robin
 start-random:  ## Iniciar requisicoes com algoritmo Random
 	@$(MAKE) --no-print-directory start ALGORITMO=random
 
-## Servidores
+start-comparacao: validar-env  ## Comparar Round Robin e Random no mesmo painel
+	@python3 scripts/comparacao.py --quantidade $(QUANTIDADE) --intervalo $(INTERVALO)
 
+# Gerenciamento dos servidores
 server1:  ## Subir apenas servidor 1
 	docker compose up -d server1
 
@@ -60,18 +69,7 @@ stop-server2:  ## Simular falha do servidor 2
 stop-server3:  ## Simular falha do servidor 3
 	docker compose stop server3
 
-demo-round-robin:  ## Demonstrar 9 requisicoes sequenciais com Round Robin
-	@for requisicao in 1 2 3 4 5 6 7 8 9; do \
-		servidor=$$(curl -s -D - -o /dev/null http://localhost:3001/ | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
-		echo "[Round Robin] Servidor $$servidor"; \
-	done
-
-demo-random:  ## Demonstrar 9 requisicoes sequenciais com algoritmo Random
-	@for requisicao in 1 2 3 4 5 6 7 8 9; do \
-		servidor=$$(curl -s -D - -o /dev/null 'http://localhost:3001/?algorithm=random' | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
-		echo "[Random] Servidor $$servidor"; \
-	done
-
+# Testes de carga
 test-demo:  ## Gerar 30 requisicoes para acompanhar nos logs
 	ab -q -n 30 -c 3 http://localhost:3001/
 

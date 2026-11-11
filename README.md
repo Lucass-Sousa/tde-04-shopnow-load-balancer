@@ -39,15 +39,6 @@ O endpoint `http://localhost:3001/health` mostra quais instâncias estão dispon
 
 Em um terminal, execute `make logs`. Ele exibirá somente as novas escolhas do balanceador e os atendimentos das instâncias.
 
-Em outro terminal, faça demonstrações curtas e fáceis de acompanhar:
-
-```bash
-make demo-round-robin
-make demo-random
-```
-
-O primeiro deve alternar os servidores em ciclo; o segundo deve escolhê-los em ordem variável. Para gerar 30 requisições concorrentes, use `make test-demo`. Para o teste de carga completo, use `make test-load`.
-
 Para enviar e observar uma requisição por vez, use. O terminal exibirá somente o servidor que respondeu:
 
 ```bash
@@ -73,11 +64,12 @@ Depois, escolha o algoritmo pelo Makefile:
 ```bash
 make start-round-robin
 make start-random
+make start-comparacao
 ```
 
 O arquivo `.env` é obrigatório para `make start`; não há valores padrão para quantidade ou intervalo.
 
-O comando atualiza barras no terminal durante a execução, mostrando a distribuição acumulada entre os três servidores. Em outro terminal, use `make logs` para ver cada decisão do balanceador.
+Os dois primeiros comandos atualizam barras no terminal durante a execução, mostrando a distribuição de um algoritmo. O comando `make start-comparacao` envia uma requisição Round Robin e uma Random por ciclo, exibindo as duas distribuições no mesmo painel. Em outro terminal, use `make logs` para ver cada decisão do balanceador.
 
 ## Simulação de falha
 
