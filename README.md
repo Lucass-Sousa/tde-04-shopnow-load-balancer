@@ -9,6 +9,33 @@ Balanceador de carga em Python para três instâncias da ShopNow.
 - Python 3 para os monitores executados no terminal;
 - Apache Benchmark (`ab`), instalado com `make install` em sistemas Ubuntu/Debian.
 
+## Execução no Windows
+
+Para manter os mesmos comandos `make`, utilize Docker Desktop com WSL 2 e o terminal Ubuntu integrado ao VS Code.
+
+1. Instale o [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) e habilite o modo **Linux containers**;
+2. Em um PowerShell aberto como administrador, execute `wsl --install` e reinicie o computador quando solicitado;
+3. No Docker Desktop, acesse **Settings > General** e habilite **Use WSL 2 based engine**;
+4. Em **Settings > Resources > WSL Integration**, habilite a distribuição Ubuntu;
+5. No VS Code, instale a extensão WSL e use o comando **WSL: Reopen Folder in WSL**.
+
+No terminal Ubuntu do VS Code, instale as ferramentas necessárias:
+
+```bash
+sudo apt update
+sudo apt install -y make apache2-utils python3
+```
+
+Depois, os comandos do projeto funcionam normalmente:
+
+```bash
+make up
+make start-round-robin
+make test-load-round-robin
+```
+
+O navegador do Windows acessa a aplicação em `http://localhost:3001`.
+
 ## Recursos
 
 - Três instâncias independentes do site (`server1`, `server2` e `server3`);
