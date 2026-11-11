@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   shopnow-net:
     driver: bridge
@@ -7,8 +5,9 @@ networks:
 services:
 
   balanceador:
-    build: ./balanceador
+    build: .
     container_name: shopnow-balancer
+    command: ["python", "balanceador/app.py"]
     ports:
       - "3001:3001"
     networks:
@@ -19,8 +18,9 @@ services:
       - server3
 
   server1:
-    build: ./servers/server1
+    build: .
     container_name: shopnow-server1
+    command: ["python", "instancias/app.py", "--id", "1", "--port", "3002"]
     ports:
       - "3002:3002"
     networks:
@@ -28,8 +28,9 @@ services:
     restart: unless-stopped
 
   server2:
-    build: ./servers/server2
+    build: .
     container_name: shopnow-server2
+    command: ["python", "instancias/app.py", "--id", "2", "--port", "3003"]
     ports:
       - "3003:3003"
     networks:
@@ -37,8 +38,9 @@ services:
     restart: unless-stopped
 
   server3:
-    build: ./servers/server3
+    build: .
     container_name: shopnow-server3
+    command: ["python", "instancias/app.py", "--id", "3", "--port", "3004"]
     ports:
       - "3004:3004"
     networks:

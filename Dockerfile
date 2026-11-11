@@ -1,11 +1,7 @@
-FROM php:8.1-apache
-WORKDIR /var/www/html
+FROM python:3.12-slim
 
-# Instalar extensões básicas
-RUN docker-php-ext-install pdo pdo_mysql
+WORKDIR /app
+COPY . .
 
-# Expor porta interna
-EXPOSE 80
-
-# Apache começa automaticamente
-CMD ["apache2-foreground"]
+# A imagem é compartilhada pelo balanceador e pelas instâncias.
+CMD ["python", "balanceador/app.py"]
