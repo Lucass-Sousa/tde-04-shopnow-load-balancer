@@ -1,4 +1,4 @@
-.PHONY: help install up down logs server1 server2 server3 stop-server1 stop-server2 stop-server3 test-demo test-load
+.PHONY: help install up down logs server1 server2 server3 stop-server1 stop-server2 stop-server3 demo-round-robin demo-random test-demo test-load
 
 help:  ## Mostrar esta ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "} {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -19,7 +19,7 @@ down:  ## Derribar todos os containers
 	docker compose down
 
 logs:  ## Ver logs dos containers
-	docker compose logs -f
+	docker compose logs -f --tail=0
 
 ## Servidores
 
@@ -40,6 +40,18 @@ stop-server2:  ## Simular falha do servidor 2
 
 stop-server3:  ## Simular falha do servidor 3
 	docker compose stop server3
+
+demo-round-robin:  ## Demonstrar 9 requisicoes sequenciais com Round Robin
+	@for requisicao in 1 2 3 4 5 6 7 8 9; do \
+		curl -s http://localhost:3001/; \
+		echo; \
+	done
+
+demo-random:  ## Demonstrar 9 requisicoes sequenciais com algoritmo Random
+	@for requisicao in 1 2 3 4 5 6 7 8 9; do \
+		curl -s 'http://localhost:3001/?algorithm=random'; \
+		echo; \
+	done
 
 test-demo:  ## Gerar 30 requisicoes para acompanhar nos logs
 	ab -q -n 30 -c 3 http://localhost:3001/

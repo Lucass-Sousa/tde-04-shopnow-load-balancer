@@ -37,7 +37,16 @@ O endpoint `http://localhost:3001/health` mostra quais instâncias estão dispon
 
 ## Acompanhamento pelo terminal
 
-Em um terminal, execute `make logs`. Em outro, rode `make test-demo` para gerar 30 requisições e acompanhar a escolha do balanceador e o atendimento de cada instância. Para o teste de carga completo, use `make test-load`.
+Em um terminal, execute `make logs`. Ele exibirá somente as novas escolhas do balanceador e os atendimentos das instâncias.
+
+Em outro terminal, faça demonstrações curtas e fáceis de acompanhar:
+
+```bash
+make demo-round-robin
+make demo-random
+```
+
+O primeiro deve alternar os servidores em ciclo; o segundo deve escolhê-los em ordem variável. Para gerar 30 requisições concorrentes, use `make test-demo`. Para o teste de carga completo, use `make test-load`.
 
 ## Simulação de falha
 
