@@ -75,6 +75,8 @@ make start-round-robin
 make start-random
 ```
 
+O arquivo `.env` é obrigatório para `make start`; não há valores padrão para quantidade ou intervalo.
+
 ## Simulação de falha
 
 ```bash

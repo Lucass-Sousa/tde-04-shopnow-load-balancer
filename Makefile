@@ -3,8 +3,6 @@
 -include .env
 
 ALGORITMO ?= round-robin
-QUANTIDADE ?= 10
-INTERVALO ?= 1
 
 help:  ## Mostrar esta ajuda
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "} {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -32,6 +30,8 @@ request:  ## Enviar uma requisicao (use ALGORITMO=random para Random)
 	if [ -n "$$servidor" ]; then echo "[Resposta] Servidor $$servidor"; else echo "[Resposta] Nenhum servidor disponivel"; fi
 
 start:  ## Enviar requisicoes uma por vez conforme o arquivo .env
+	@if [ ! -f .env ]; then echo "Erro: arquivo .env nao encontrado. Execute: cp .env.example .env"; exit 1; fi
+	@if [ -z "$(QUANTIDADE)" ] || [ -z "$(INTERVALO)" ]; then echo "Erro: preencha QUANTIDADE e INTERVALO no arquivo .env"; exit 1; fi
 	@for requisicao in $$(seq 1 $(QUANTIDADE)); do \
 		servidor=$$(curl -s -D - -o /dev/null "http://localhost:3001/?algorithm=$(ALGORITMO)" | awk -F ': ' '/^X-ShopNow-Server:/ {gsub("\r", "", $$2); print $$2}'); \
 		if [ -n "$$servidor" ]; then echo "[Resposta] Servidor $$servidor"; else echo "[Resposta] Nenhum servidor disponivel"; fi; \
