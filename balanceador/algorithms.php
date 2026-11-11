@@ -15,3 +15,14 @@ function escolherRoundRobin($servidores) {
     return null;
 }
 
+// --- Função: Random ---
+// Escolhe um servidor aleatório entre os vivos
+function escolherRandom($servidores) {
+    $servidoresVivos = array_filter($servidores, fn($s) => $s['ativo']);
+    if (count($servidoresVivos) > 0) {
+        $indiceAleatorio = array_rand($servidoresVivos);
+        return $servidoresVivos[$indiceAleatorio];
+    }
+    return null;
+}
+
