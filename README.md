@@ -91,3 +91,5 @@ make test-load
 ```
 
 O comando realiza 1.000 requisições com concorrência de 50 clientes contra o balanceador.
+
+O parâmetro `-l` do Apache Benchmark aceita respostas com tamanho variável, pois cada instância inclui seu contador de requisições na resposta.

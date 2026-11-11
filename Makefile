@@ -71,7 +71,7 @@ stop-server3:  ## Simular falha do servidor 3
 
 # Testes de carga
 test-demo:  ## Gerar 30 requisicoes para acompanhar nos logs
-	ab -q -n 30 -c 3 http://localhost:3001/
+	ab -q -l -n 30 -c 3 http://localhost:3001/
 
 test-load:  ## Executar teste de carga com Apache Benchmark
-	ab -n 1000 -c 50 http://localhost:3001/
+	ab -l -n 1000 -c 50 http://localhost:3001/
