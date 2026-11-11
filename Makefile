@@ -1,4 +1,4 @@
-.PHONY: help install up down logs request start server1 server2 server3 stop-server1 stop-server2 stop-server3 demo-round-robin demo-random test-demo test-load
+.PHONY: help install up down logs request start start-round-robin start-random server1 server2 server3 stop-server1 stop-server2 stop-server3 demo-round-robin demo-random test-demo test-load
 
 -include .env
 
@@ -37,6 +37,12 @@ start:  ## Enviar requisicoes uma por vez conforme o arquivo .env
 		echo; \
 		if [ "$$requisicao" -lt "$(QUANTIDADE)" ]; then sleep $(INTERVALO); fi; \
 	done
+
+start-round-robin:  ## Iniciar requisicoes com algoritmo Round Robin
+	@$(MAKE) start ALGORITMO=round-robin
+
+start-random:  ## Iniciar requisicoes com algoritmo Random
+	@$(MAKE) start ALGORITMO=random
 
 ## Servidores
 

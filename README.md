@@ -64,21 +64,15 @@ cp .env.example .env
 Exemplo de `.env`:
 
 ```text
-ALGORITMO=round-robin
 QUANTIDADE=10
 INTERVALO=1
 ```
 
-Depois, execute:
+Depois, escolha o algoritmo pelo Makefile:
 
 ```bash
-make start
-```
-
-Também é possível sobrescrever um valor para uma única execução:
-
-```bash
-make start ALGORITMO=random QUANTIDADE=20 INTERVALO=0.5
+make start-round-robin
+make start-random
 ```
 
 ## Simulação de falha
