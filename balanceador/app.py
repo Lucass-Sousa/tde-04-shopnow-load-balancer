@@ -48,6 +48,8 @@ EVENTOS = CentralEventos()
 
 
 class ManipuladorRequisicao(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
     def do_GET(self):
         url_analisada = urlsplit(self.path)
         if url_analisada.path == "/dashboard":
@@ -85,8 +87,11 @@ class ManipuladorRequisicao(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/event-stream")
         self.send_header("Cache-Control", "no-cache")
         self.send_header("Connection", "keep-alive")
+        self.send_header("X-Accel-Buffering", "no")
         self.end_headers()
         try:
+            self.wfile.write(b": conectado\n\n")
+            self.wfile.flush()
             while True:
                 try:
                     evento = fila.get(timeout=15)

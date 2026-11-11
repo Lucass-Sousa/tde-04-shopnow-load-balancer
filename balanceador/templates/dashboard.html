@@ -35,7 +35,7 @@
     </section>
 
     <section class="resumo">
-      <span class="status" id="status">Aguardando início</span>
+      <span class="status" id="status">Conectando aos eventos...</span>
       <span id="progresso">0 requisições concluídas</span>
     </section>
 
@@ -51,8 +51,17 @@
     let total = 0;
     let concluidas = 0;
     let contadores = { 1: 0, 2: 0, 3: 0 };
+    let sseConectado = false;
 
     const eventos = new EventSource('/eventos');
+    eventos.onopen = () => {
+      sseConectado = true;
+      if (!executando) document.getElementById('status').textContent = 'Pronto para iniciar';
+    };
+    eventos.onerror = () => {
+      sseConectado = false;
+      if (!executando) document.getElementById('status').textContent = 'Reconectando aos eventos...';
+    };
     eventos.addEventListener('requisicao', (evento) => {
       const dado = JSON.parse(evento.data);
       if (executando && dado.algoritmo === algoritmoAtual) {
@@ -85,6 +94,10 @@
     }
 
     async function iniciar(algoritmo) {
+      if (!sseConectado) {
+        document.getElementById('status').textContent = 'Aguarde a conexão com os eventos';
+        return;
+      }
       parar();
       algoritmoAtual = algoritmo;
       total = Number(document.getElementById('quantidade').value) || 300;
