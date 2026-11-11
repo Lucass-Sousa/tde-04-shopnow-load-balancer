@@ -1,6 +1,8 @@
 """Gera requisições e mostra a distribuição no terminal."""
 
 import argparse
+import os
+import sys
 import time
 from collections import Counter
 from urllib.error import HTTPError, URLError
@@ -17,7 +19,8 @@ def barra(valor, total):
 
 def mostrar_painel(algoritmo, quantidade, atual, contadores, falhas):
     progresso = (atual / quantidade) * 100
-    print("\033[2J\033[H", end="")
+    if sys.stdout.isatty():
+        os.system("clear")
     print(f"ShopNow | Algoritmo: {algoritmo}")
     print(f"Progresso: [{barra(atual, quantidade)}] {atual}/{quantidade} ({progresso:.0f}%)")
     print()
