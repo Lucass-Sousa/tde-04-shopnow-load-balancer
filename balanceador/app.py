@@ -1,13 +1,13 @@
 """Camada HTTP e orquestração do balanceador da ShopNow."""
 
 import json
+from http.client import HTTPConnection, HTTPException
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
 from algorithms import ServerSelector
-from config import SERVERS
 from health_check import healthy_servers, is_healthy
-from proxy import forward_request
+from servers import SERVERS
 
 SELECTOR = ServerSelector()
 
@@ -41,8 +41,14 @@ class RequestHandler(BaseHTTPRequestHandler):
 
     def proxy_to(self, server):
         try:
-            status, content_type, body = forward_request(server, self.path)
-        except ConnectionError:
+            connection = HTTPConnection(server.host, server.port, timeout=3)
+            connection.request("GET", self.path)
+            response = connection.getresponse()
+            status = response.status
+            content_type = response.getheader("Content-Type", "application/octet-stream")
+            body = response.read()
+            connection.close()
+        except (OSError, HTTPException):
             self.send_json(502, {"error": "selected server became unavailable"})
             return
 

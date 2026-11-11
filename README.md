@@ -12,13 +12,12 @@ Balanceador de carga em Python para três instâncias da ShopNow.
 
 ## Organização do balanceador
 
-Cada módulo tem uma responsabilidade única:
+Cada módulo tem uma responsabilidade única, sem fragmentar excessivamente o projeto:
 
-- `app.py`: recebe a requisição HTTP e coordena os demais módulos;
-- `config.py` e `models.py`: definem as instâncias monitoradas;
+- `app.py`: recebe a requisição HTTP, coordena os demais módulos e encaminha a chamada;
+- `servers.py`: define as instâncias monitoradas;
 - `health_check.py`: verifica a disponibilidade das instâncias;
 - `algorithms.py`: escolhe uma instância por Round Robin ou Random;
-- `proxy.py`: encaminha a requisição à instância selecionada.
 
 ## Execução
 
