@@ -59,9 +59,9 @@ def mostrar_painel(algoritmo, quantidade, atual, contadores, falhas, identificad
 def enviar_requisicao(algoritmo, identificador):
     endereco = f"http://localhost:3001/?algorithm={algoritmo}&requisicao_id={identificador}"
     try:
-        with urlopen(endereco, timeout=3) as resposta:
+        with urlopen(endereco, timeout=5) as resposta:
             return resposta.headers.get("X-ShopNow-Server")
-    except (HTTPError, URLError):
+    except (HTTPError, URLError, TimeoutError):
         return None
 
 
